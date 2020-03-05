@@ -7,6 +7,7 @@ Created on Mon Mar  2 09:30:01 2020
 
 import pandas as pd
 import json
+import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.offline import plot
@@ -214,6 +215,14 @@ montant_total_convention = sum(tab_montant_convention)
 fig3 = go.Figure(data=[go.Pie(labels=["avantage : 1.626.196.578", "remuneration : 2.418.180.749", 'convention : 3.963.333.090'], values=[montant_total_avantage, montant_total_remuneration, montant_total_convention])])
 plot(fig3, auto_open=True)
 
+# repartition temporel de la distribution d'argent dans convention :
+
+""" pas le temps """
+
+
+
+
+
 
 
 
@@ -252,6 +261,7 @@ df_sum_remuneration = df_gb_annee_tab_remu_par_date.sum()
 # repartition temporel de la distribution d'argent dans avantage :
 
 tab_avantage_par_date = declaration_avantage[['avant_date_signature', 'avant_montant_ttc']]
+
 
 col = tab_avantage_par_date.apply(lambda row : (row["avant_date_signature"][-4:]), axis = 1) 
 print(len(col))
@@ -305,12 +315,79 @@ fig5 = px.box(tab_remu_par_date, y="remu_montant_ttc")
 
 plot(fig5, auto_open=True)
 
+#######################################################################################################
+#######################################################################################################
+#                                           COLOMBE                                                   #
+#######################################################################################################
+#######################################################################################################
+
+
+
+
+#avantage.info() # affiche les informations de la table avantage
+##print("les donnaées statistiques de la base avantage")
+#avantage.describe().round(2)# affichage des donnees statistiques de la table avantage avec 2 chiffres en arrondi
+categorie_benef_avantage = declaration_avantage.groupby('categorie')["entreprise_identifiant"].count() #compte les données selon la qualite des beneficiaires
+#print("Le nombre par categorie des beneficiaires est")
+#print(categorie_benef_avantage) # Affichage des valeurs par categorie
+df_avant_plus = pd.DataFrame(categorie_benef_avantage)
+#print(df_avant_plus) # Affichage du dataframe
+df_avant_plusR = df_avant_plus['entreprise_identifiant'].sort_values()
+
+
+dicto = {}
+dicto = df_avant_plusR
+#print("le dict est", dict)
+liste1_categ_benef_avant = [] 
+liste2_categ_benef_avant = [] 
+j = 0
+somme = 0
+
+for cle,valeur in dicto.items():
+    #print(cle, valeur)
+    if valeur > 10000 :
+       # print(cat)
+        liste2_categ_benef_avant.append(valeur)# recupération des valeurs des catégories
+        liste1_categ_benef_avant.append(cle) # recupération des noms des categories
+        j = j + 1
+    else :
+        somme = somme + valeur
+        #liste_categ_benef_avant[j] = somme
+
+liste2_categ_benef_avant.append(somme)
+liste1_categ_benef_avant.append("Autres")
+#Création d'un dataframe qui stocke les données
+categ_benef_avant = pd.DataFrame({'categorie':liste1_categ_benef_avant, 'valeur':liste2_categ_benef_avant})
+
+ProfSant_benef_avantage = declaration_avantage.groupby('qualite')["categorie"].count() #compte les données selon la qualite des beneficiaires
+
+
+
+declaration_avantage[declaration_avantage['categorie'] == 'Professionnel de santé'].groupby(['qualite'])['categorie'].count() #compte les données selon la qualite des beneficiaires
+#print(ProfSant_benef_avantage) 
+avantage_pro_sante= declaration_avantage[declaration_avantage['categorie']=='Professionnel de santé']['qualite']
+#print(avantage_pro_sante)
+ProfSant_benef_avant = pd.DataFrame({'Index':avantage_pro_sante.index.values,'qualite':avantage_pro_sante}) #, 'valeur':liste2_categ_benef_avant})
+print(ProfSant_benef_avant)
+ProfSant_benef_avantage = ProfSant_benef_avant.groupby(['qualite'])['Index'].count() #compte les données selon la qualite des beneficiaires
+print(ProfSant_benef_avantage)
+
+#plot(categ_benef_avant['categorie'],categ_benef_avant['valeur'])
+name = categ_benef_avant['categorie']
+data = categ_benef_avant['valeur']
+plt.pie(data, labels=name, startangle=90, shadow=True)
+plt.axis('equal')
+plt.show()
 
 
 
 
 
-
+#######################################################################################################
+#######################################################################################################
+#                                           DASHBOARD                                                 #
+#######################################################################################################
+#######################################################################################################
 
 
 
@@ -320,11 +397,11 @@ plot(fig5, auto_open=True)
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__)
 
-app.layout = html.Div([
+app.layout = html.Div(style = {"fontFamily" : "Roboto"}, children = [
         html.Div([
                 
 
-                        html.H1(children='Projet Transparence-Santé'),
+                        html.H1(children='Projet Transparence Santé'),
                         html.Img(src="/assets/index.png", className="simplon"),
                         html.H4(children = 'By Colombe, Vincent, et Nicolas')
 
@@ -332,14 +409,14 @@ app.layout = html.Div([
 
     html.Div([
         html.Div([
-                html.H3("Nombre d'entreprise par secteurs d'activité"),
+                html.H3(children = "Nombre d'entreprise par secteurs d'activité", style = { 'textAlign' : 'center' ,'backgroundColor' : '#ceffab'} ),
                 dcc.Graph(
                         id='graph1',
                         figure=  fig1
                         )                
                 ], className="six columns", style={'width' : '49%'}),
         html.Div([
-                html.H3('Objet de Convention'),
+                html.H3(children = 'Objet de Convention',style = { 'textAlign' : 'center', 'backgroundColor' : '#ffe8e8'} ),
                 dcc.Graph(
                         id='graph2',
                         figure=  fig2
@@ -347,101 +424,35 @@ app.layout = html.Div([
                 ], className="six columns", style={'width' : '49%'}),
             ], className="row", style = {'display' : 'flex', 'flex-direction': 'row', 'width' : '100%'}),
                 
+        html.Hr(),
+        
         html.Div([
-                html.H3(children = "Répartition generale des depenses engagées"),
+                html.H3(children = "Répartition generale des depenses engagées",  style = { 'backgroundColor' : '#fde8ff'}),
+                html.H3(children = "Total = 8 007 710 417‬ milliards d'euros"),
                 dcc.Graph(
                         id='graph3',
                         figure=  fig3
                         )                
-                ], style={'textAlign' : 'center'})
+                ], style={'textAlign' : 'center'}),
                 
+         html.Hr(),   
+         
            html.Div([
-                html.H3(children = "Répartition temporelle des depenses engagées"),
+                html.H3(children = "Répartition temporelle des depenses engagées", style = { 'backgroundColor' : '#e8f1ff'}),
                 dcc.Graph(
-                        id='graph3',
-                        figure=  fig3
+                        id='graph4',
+                        figure=  fig4
                         )                
-                ], style={'textAlign' : 'center'})                        
+                ], style={'textAlign' : 'center'}),
+
+        html.Hr(),      
+
+                
 ])               
 
 
 if __name__ == '__main__':
     app.run_server(debug=False)
-
-"""
-
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-app.layout = html.Div(children=[
-    html.H1(children='Hello Dash'),
-
-    html.Div(children='''
-        Dash: A web application framework for Python.
-    '''),
-
-    dcc.Graph(
-        id='example-graph',
-        figure={
-            'data': [
-                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
-            ],
-            'layout': {
-                'title': 'Dash Data Visualization'
-            }
-        }
-    )
-])
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
-
-
-
-
-
-
-
-
-
-nbr_entreprise_dans_remuneration = pd.value_counts(declaration_remuneration['entreprise_identifiant'])
-nbr_entreprise_dans_convention = pd.value_counts(declaration_convention['entreprise_identifiant'])
-
-
-print(len(nbr_entreprise_dans_remuneration)) # 828
-print(len(nbr_entreprise_dans_convention)) # 1953
-"""
-
-
-
-
-
-"""
-test_line = df1.head()
-
-nbr_entreprise = len(df1['entreprise_identifiant'].value_counts()) # 1983
-valeur_categorie = df1['categorie'].unique() # 14
-valeur_rectif = df1['ligne_rectification'].unique() # 2 --> 'N' ou 'O'
-
-df1.info()
-
-df1.columns
-
-test_conv = df1.groupby(['denomination_sociale']).mean()
-print(test_conv)
-    
-test_avantage = df.groupby(['denomination_sociale']).mean()
-print(test_avantage)
-
-num_conv = df1[df1['ligne_identifiant'] == '20191OTC17']
-num_remu = df2[ '20191OTC17' == df2['remu_convention_liee']]
-"""
 
 
 
